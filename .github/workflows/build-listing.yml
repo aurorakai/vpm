@@ -56,7 +56,31 @@ jobs:
         run: ${{env.pathToCi}}/build.cmd BuildMultiPackageListing --root ${{env.pathToCi}} --list-publish-directory $GITHUB_WORKSPACE/${{env.listPublishDirectory}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- 
+
+      - name: Inject package types into listing
+        # vrchat-community/package-list-action doesn't propagate the 'type'
+        # field from each package's package.json into the generated listing, so
+        # VCC's Avatar/World/Tool filter buckets everything under "Any". Patch
+        # the built index.json to restore the intended type per package.
+        shell: bash
+        run: |
+          FILE="${{env.listPublishDirectory}}/index.json"
+          if [ ! -f "$FILE" ]; then
+            echo "::error::$FILE not found - listing build may have failed"
+            exit 1
+          fi
+          # Map of package name -> type. Extend here as new packages are added.
+          jq '
+            (.packages["com.aurorakai.sps-tools"].versions // {}) |=
+              with_entries(.value.type = "avatar")
+          ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+          echo "Patched types:"
+          jq -r '
+            .packages | to_entries[] |
+              "  " + .key + ":\n" +
+              (.value.versions | to_entries | map("    " + .key + " -> type=" + (.value.type // "(none)")) | join("\n"))
+          ' "$FILE"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
         
