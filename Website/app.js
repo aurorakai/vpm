@@ -228,4 +228,32 @@ const setTheme = () => {
   packageInfoListingHelp.addEventListener('click', () => {
     addListingToVccHelp.hidden = false;
   });
+
+  // package-list-action's Scriban context hardcodes package.Type to "Any", so
+  // the Type column renders "Any" for every package regardless of what its
+  // package.json says. Work around it by fetching the published listing
+  // (which already carries the correct per-package type) and rewriting each
+  // row's Type cell client-side.
+  fetch(LISTING_URL, { cache: 'no-store' })
+    .then((response) => response.ok ? response.json() : Promise.reject(response.statusText))
+    .then((listing) => {
+      const packages = listing?.packages || {};
+      for (const [packageId, packageEntry] of Object.entries(packages)) {
+        const versions = Object.values(packageEntry?.versions || {});
+        if (versions.length === 0) continue;
+        const latest = versions[versions.length - 1];
+        const rawType = latest?.type;
+        if (!rawType) continue;
+        const row = document.querySelector(
+          `fluent-data-grid-row[data-package-id="${packageId}"]`
+        );
+        if (!row) continue;
+        const typeCell = row.querySelector('fluent-data-grid-cell[grid-column="2"]');
+        if (!typeCell) continue;
+        typeCell.textContent = rawType.charAt(0).toUpperCase() + rawType.slice(1);
+      }
+    })
+    .catch((error) => {
+      console.warn('Could not load listing to patch package types:', error);
+    });
 })();
