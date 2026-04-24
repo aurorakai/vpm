@@ -11,6 +11,8 @@
         "text":"View on GitHub"
     },
     "bannerUrl":"banner.png",
-    "githubRepos":[],
+    "githubRepos":[
+        "aurorakai/sps-tools"
+    ],
     "packages":[]
 }

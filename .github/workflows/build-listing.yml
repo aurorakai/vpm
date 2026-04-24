@@ -1,10 +1,16 @@
 name: Build Repo Listing
 
-on: 
+on:
   workflow_dispatch:
   push:
     branches: main
     paths: source.json
+  # Package repos can fire repository_dispatch on release to trigger an
+  # immediate rebuild. Each package uses its own event type so the logs
+  # stay informative about which package caused the run.
+  repository_dispatch:
+    types:
+      - sps-tools-released
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
