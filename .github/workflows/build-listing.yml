@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: main
-    paths: source.json
+    paths:
+      - source.json
+      - .github/workflows/build-listing.yml
   # Package repos can fire repository_dispatch on release to trigger an
   # immediate rebuild. Each package uses its own event type so the logs
   # stay informative about which package caused the run.
